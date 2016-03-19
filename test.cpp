@@ -15,6 +15,7 @@ BOOST_AUTO_TEST_CASE(insert)
         .insert("name", "six")
         .insert("address", std::string("beijing"))
         .insert("age", 18)
+        .insert("age", (int64_t)15323892489203488)
         .into("info");
     std::cout<<m<<std::endl;
     std::cout<<m.str()<<std::endl;
