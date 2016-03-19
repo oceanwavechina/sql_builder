@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <ctime>
 
 class SqlModel
 {
@@ -59,6 +60,17 @@ InsertModel& InsertModel::insert<std::string>(const std::string& column, const s
     return *this;
 }
 
+template <>
+InsertModel& InsertModel::insert<time_t>(const std::string& column, const time_t& data) {
+    char buf[128] = {0};
+    struct tm* ttime = localtime(&data);
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ttime);
+    _in_sql = true;
+    _columns.push_back(column);
+    _values.push_back("'" + std::string(buf) + "'");
+    return *this;
+}
+
 class SelectModel : public SqlModel
 {
 public:
@@ -98,6 +110,16 @@ template <>
 SelectModel& SelectModel::where<std::string>(const std::string& column, const std::string& data) {
     _in_sql = true;
     _where_condition.push_back(column + " = '" + data + "'");
+    return *this;
+}
+
+template <>
+SelectModel& SelectModel::where<time_t>(const std::string& column, const time_t& data) {
+    char buf[128] = {0};
+    struct tm* ttime = localtime(&data);
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ttime);
+    _in_sql = true;
+    _where_condition.push_back(column + " = '" + std::string(buf) + "'");
     return *this;
 }
 

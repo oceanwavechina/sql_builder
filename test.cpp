@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE(insert)
     i.insert("id", (short)32312)
         .insert("name", std::string("six"))
         .insert("address", std::string("beijing"))
-        .insert("age", 18)
+        .insert("time", time(NULL))
         .insert("age", (int64_t)15323892489203488)
         .into("info");
     std::cout<<i<<std::endl;
@@ -24,6 +24,7 @@ BOOST_AUTO_TEST_CASE(insert)
     s.select("name, age, address")
         .from("info")
         .where("id", 2)
+        .where("time", time(NULL))
         .where("name", std::string("six"))
         .where("address", std::string("beijing"));
     std::cout<<s<<std::endl;
