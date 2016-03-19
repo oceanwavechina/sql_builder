@@ -1,59 +1,104 @@
 #ifndef _SQL_H_
 #define _SQL_H_
 
+#include <vector>
 #include <string>
-#include <boost/unordered_map.hpp>
-#include <boost/lexical_cast.hpp>
 
-enum ColumnType {
-    COLUMN_TYPE_NONE,
-    COLUMN_TYPE_INT16,
-    COLUMN_TYPE_UINT16,
-    COLUMN_TYPE_INT32,
-    COLUMN_TYPE_UINT32,
-    COLUMN_TYPE_INT64,
-    COLUMN_TYPE_UINT64,
-    COLUMN_TYPE_FLOAT,
-    COLUMN_TYPE_DOUBLE,
-    COLUMN_TYPE_STRING
+class SqlModel
+{
+public:
+    virtual void reset() = 0;
+    virtual std::string str() = 0;
+
+    friend inline std::ostream& operator<< (std::ostream& out, SqlModel& mod) {
+        out<<mod.str();
+        return out;
+    }
+protected:
+    std::string _sql;
 };
 
-class InsertModel
+class InsertModel : public SqlModel
 {
 public:
     InsertModel() : _in_sql(true) {}
     virtual ~InsertModel() {}
 
-    InsertModel& insert(const std::string& column, const int16_t& data);
-    InsertModel& insert(const std::string& column, const uint16_t& data);
-    InsertModel& insert(const std::string& column, const int32_t& data);
-    InsertModel& insert(const std::string& column, const uint32_t& data);
-    InsertModel& insert(const std::string& column, const int64_t& data);
-    InsertModel& insert(const std::string& column, const uint64_t& data);
-    InsertModel& insert(const std::string& column, const float& data);
-    InsertModel& insert(const std::string& column, const double& data);
-    InsertModel& insert(const std::string& column, const std::string& data);
+    template <typename T>
+    InsertModel& insert(const std::string& column, const T& data) {
+        _in_sql = true;
+        _columns.push_back(column);
+        _values.push_back(std::to_string(data));
+        return *this;
+    }
 
     inline void into(const std::string& table_name) {
+        _in_sql = true;
         _table_name = table_name;
     }
 
-    std::string str();
-    inline void reset() {
+    virtual std::string str();
+    virtual void reset() {
         _in_sql = true;
-        _insert_data.clear();
-    }
-
-    friend inline std::ostream& operator<< (std::ostream& out, InsertModel& mod) {
-        out<<mod.str();
-        return out;
+        _columns.clear();
+        _values.clear();
     }
 
 protected:
-    boost::unordered_map<std::string, std::pair<ColumnType, std::string> > _insert_data;
     std::string _table_name;
-    std::string _sql;
+    std::vector<std::string> _columns;
+    std::vector<std::string> _values;
     bool _in_sql;
 };
+
+template <>
+InsertModel& InsertModel::insert<std::string>(const std::string& column, const std::string& data) {
+    _in_sql = true;
+    _columns.push_back(column);
+    _values.push_back("'" + data + "'");
+    return *this;
+}
+
+class SelectModel : public SqlModel
+{
+public:
+    SelectModel() : _in_sql(true) {}
+    virtual ~SelectModel() {}
+
+    SelectModel& select(const std::string& columns);
+    SelectModel& select(const std::vector<std::string> columns);
+
+    SelectModel& from(const std::string& table_name) {
+        _in_sql = true;
+        _table_name = table_name;
+        return *this;
+    }
+
+    template <typename T>
+    SelectModel& where(const std::string& column, const T& data) {
+        _in_sql = true;
+        _where_condition.push_back(column + " = " + std::to_string(data));
+        return *this;
+    }
+
+    virtual std::string str();
+    virtual void reset() {
+        _in_sql = true;
+        _select_columns.clear();
+    }
+
+protected:
+    std::vector<std::string> _select_columns;
+    std::string _table_name;
+    std::vector<std::string> _where_condition;
+    bool _in_sql;
+};
+
+template <>
+SelectModel& SelectModel::where<std::string>(const std::string& column, const std::string& data) {
+    _in_sql = true;
+    _where_condition.push_back(column + " = '" + data + "'");
+    return *this;
+}
 
 #endif

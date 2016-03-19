@@ -2,139 +2,69 @@
 #include <iostream>
 #include <sstream>
 
-InsertModel& InsertModel::insert(const std::string& column, const int16_t& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_INT16, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const uint16_t& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_UINT16, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const int32_t& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_INT32, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const uint32_t& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_UINT32, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const int64_t& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_INT64, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const uint64_t& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_UINT64, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const float& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_FLOAT, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const double& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_DOUBLE, boost::lexical_cast<std::string>(data));
-    return *this;
-}
-
-InsertModel& InsertModel::insert(const std::string& column, const std::string& data) {
-    _insert_data[column] = std::make_pair(COLUMN_TYPE_STRING, data);
-    return *this;
-}
-
 std::string InsertModel::str() {
     if(!_in_sql) return _sql;
     std::stringstream c_ss, v_ss;
     c_ss<<"insert into "<<_table_name<<"(";
     v_ss<<" values(";
-    size_t i = 0, size = _insert_data.size();
-    boost::unordered_map<std::string, std::pair<ColumnType, std::string> >::const_iterator iter;
-    for(iter = _insert_data.begin(); iter != _insert_data.end(); ++iter) {
-#ifdef SQL_NO_EXCEPTION
-        try {
-#endif
-            if(++i < size) {
-                c_ss<<"`"<<iter->first<<"`,";
-                switch(iter->second.first) {
-                    case COLUMN_TYPE_INT16:
-                        v_ss<<boost::lexical_cast<int16_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_UINT16:
-                        v_ss<<boost::lexical_cast<uint16_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_INT32:
-                        v_ss<<boost::lexical_cast<int32_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_UINT32:
-                        v_ss<<boost::lexical_cast<uint32_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_INT64:
-                        v_ss<<boost::lexical_cast<int64_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_UINT64:
-                        v_ss<<boost::lexical_cast<uint64_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_FLOAT:
-                        v_ss<<boost::lexical_cast<float>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_DOUBLE:
-                        v_ss<<boost::lexical_cast<double>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_STRING:
-                        v_ss<<"'"<<iter->second.second<<"',";
-                        break;
-                    default:
-                        throw boost::bad_lexical_cast();
-                        break;
-                }
-            } else {
-                c_ss<<"`"<<iter->first<<"`)";
-                switch(iter->second.first) {
-                    case COLUMN_TYPE_INT16:
-                        v_ss<<boost::lexical_cast<int16_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_UINT16:
-                        v_ss<<boost::lexical_cast<uint16_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_INT32:
-                        v_ss<<boost::lexical_cast<int32_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_UINT32:
-                        v_ss<<boost::lexical_cast<uint32_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_INT64:
-                        v_ss<<boost::lexical_cast<int64_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_UINT64:
-                        v_ss<<boost::lexical_cast<uint64_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_FLOAT:
-                        v_ss<<boost::lexical_cast<float>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_DOUBLE:
-                        v_ss<<boost::lexical_cast<double>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_STRING:
-                        v_ss<<"'"<<iter->second.second<<"')";
-                        break;
-                    default:
-                        throw boost::bad_lexical_cast();
-                        break;
-                }
-            }
-#ifdef SQL_NO_EXCEPTION
-        } catch (boost::bad_lexical_cast& e) {
-            std::cerr<<"boost::bad_lexical_cast column: "<<iter->first<<" exception:"<<e.what()<<std::endl;
+    size_t size = _columns.size();
+    for(int i = 0; i < size; ++i) {
+        if(i < size - 1) {
+            c_ss<<_columns[i]<<",";
+            v_ss<<_values[i]<<",";
+        } else {
+            c_ss<<_columns[i]<<")";
+            v_ss<<_values[i]<<")";
         }
-#endif
     }
     c_ss<<v_ss.str();
     _in_sql = false;
     _sql = c_ss.str();
     return _sql;
+}
+
+std::string SelectModel::str() {
+    if(!_in_sql) return _sql;
+    std::stringstream ss_w;
+    ss_w<<"select ";
+    size_t size = _select_columns.size();
+    for(size_t i = 0; i < size; ++i) {
+        if(i < size - 1) {
+            ss_w<<_select_columns[i]<<",";
+        } else {
+            ss_w<<_select_columns[i];
+        }
+    }
+    ss_w<<" from "<<_table_name;
+    size = _where_condition.size();
+    if(size > 0) {
+        ss_w<<" where ";
+        for(size_t i = 0; i < size; ++i) {
+            if(i < size - 1) {
+                ss_w<<_where_condition[i]<<" and ";
+            } else {
+                ss_w<<_where_condition[i];
+            }
+        }
+    }
+    _in_sql = false;
+    _sql = ss_w.str();
+    return _sql;
+}
+
+SelectModel& SelectModel::select(const std::string& columns) {
+    std::vector<std::string> data;
+    std::stringstream ss(columns);
+    std::string ele;
+    while(std::getline(ss, ele, ',')) {
+        _select_columns.push_back(ele);
+    }
+    _in_sql = true;
+    return *this;
+}
+
+SelectModel& SelectModel::select(const std::vector<std::string> columns) {
+    _select_columns.insert(_select_columns.end(), columns.begin(), columns.end());
+    _in_sql = true;
+    return *this;
 }

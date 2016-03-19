@@ -10,15 +10,23 @@ BOOST_AUTO_TEST_SUITE(sqltest)
 
 BOOST_AUTO_TEST_CASE(insert)
 {
-    InsertModel m;
-    m.insert("id", (short)32312)
-        .insert("name", "six")
+    InsertModel i;
+    i.insert("id", (short)32312)
+        .insert("name", std::string("six"))
         .insert("address", std::string("beijing"))
         .insert("age", 18)
         .insert("age", (int64_t)15323892489203488)
         .into("info");
-    std::cout<<m<<std::endl;
-    std::cout<<m.str()<<std::endl;
+    std::cout<<i<<std::endl;
+    std::cout<<i.str()<<std::endl;
+
+    SelectModel s;
+    s.select("name, age, address")
+        .from("info")
+        .where("id", 2)
+        .where("name", std::string("six"))
+        .where("address", std::string("beijing"));
+    std::cout<<s<<std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
