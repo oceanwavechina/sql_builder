@@ -5,11 +5,10 @@
 #include <boost/any.hpp>
 #include <boost/serialization/singleton.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/lexical_cast.hpp>
 
 enum ColumnType {
     COLUMN_TYPE_NONE,
-    COLUMN_TYPE_INT8,
-    COLUMN_TYPE_UINT8,
     COLUMN_TYPE_INT16,
     COLUMN_TYPE_UINT16,
     COLUMN_TYPE_INT32,
@@ -63,7 +62,7 @@ public:
         _insert_data.clear();
     }
 
-    friend inline std::ostream& operator << (std::ostream& out, InsertModel& mod) {
+    friend inline std::ostream& operator<< (std::ostream& out, InsertModel& mod) {
         out<<mod.str();
         return out;
     }

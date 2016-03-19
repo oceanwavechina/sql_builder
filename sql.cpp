@@ -8,8 +8,6 @@ int TableModel::initColumnType() {
 }
 
 SqlModel::SqlModel() {
-    _any_type_info[boost::any((int8_t)0).type().name()] = COLUMN_TYPE_INT8;
-    _any_type_info[boost::any((uint8_t)0).type().name()] = COLUMN_TYPE_UINT8;
     _any_type_info[boost::any((int16_t)0).type().name()] = COLUMN_TYPE_INT16;
     _any_type_info[boost::any((uint16_t)0).type().name()] = COLUMN_TYPE_UINT16;
     _any_type_info[boost::any((int32_t)0).type().name()] = COLUMN_TYPE_INT32;
@@ -49,16 +47,12 @@ std::string InsertModel::str() {
     size_t i = 0, size = _insert_data.size();
     boost::unordered_map<std::string, std::pair<ColumnType, boost::any> >::const_iterator iter;
     for(iter = _insert_data.begin(); iter != _insert_data.end(); ++iter) {
+#ifdef SQL_NO_EXCEPTION
         try {
+#endif
             if(++i < size) {
                 c_ss<<"`"<<iter->first<<"`,";
                 switch(iter->second.first) {
-                    case COLUMN_TYPE_INT8:
-                        v_ss<<boost::any_cast<int8_t>(iter->second.second)<<",";
-                        break;
-                    case COLUMN_TYPE_UINT8:
-                        v_ss<<boost::any_cast<uint8_t>(iter->second.second)<<",";
-                        break;
                     case COLUMN_TYPE_INT16:
                         v_ss<<boost::any_cast<int16_t>(iter->second.second)<<",";
                         break;
@@ -96,12 +90,6 @@ std::string InsertModel::str() {
             } else {
                 c_ss<<"`"<<iter->first<<"`)";
                 switch(iter->second.first) {
-                    case COLUMN_TYPE_INT8:
-                        v_ss<<boost::any_cast<int8_t>(iter->second.second)<<")";
-                        break;
-                    case COLUMN_TYPE_UINT8:
-                        v_ss<<boost::any_cast<uint8_t>(iter->second.second)<<")";
-                        break;
                     case COLUMN_TYPE_INT16:
                         v_ss<<boost::any_cast<int16_t>(iter->second.second)<<")";
                         break;
@@ -137,9 +125,11 @@ std::string InsertModel::str() {
                         break;
                 }
             }
+#ifdef SQL_NO_EXCEPTION
         } catch (boost::bad_any_cast& e) {
-            std::cerr<<"column: "<<iter->first<<" exception:"<<e.what()<<std::endl;
+            std::cerr<<"boost::bad_any_cast column: "<<iter->first<<" exception:"<<e.what()<<std::endl;
         }
+#endif
     }
     c_ss<<v_ss.str();
     _in_sql = false;
