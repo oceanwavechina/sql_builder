@@ -27,22 +27,19 @@ SqlBuilder& SqlBuilder::select(const StringList& columns) {
 	_operationMode = SELECT;
 
 	for(const auto& column : columns){
-		if (column != "*")
-			_columns.push_back(quote(column, '`'));
-		else
-			_columns.push_back(column);
+		_columns.push_back(column);
 	}
 
 	return *this;
 }
 
 SqlBuilder& SqlBuilder::from(const std::string& table) {
-	_tableName = quote(table, '`');
+	_tableName = table;
 	return *this;
 }
 
 SqlBuilder& SqlBuilder::groupby(const std::string& groupBy) {
-	_groupBy = quote(groupBy, '`');
+	_groupBy = groupBy;
 	return *this;
 }
 
@@ -53,14 +50,14 @@ SqlBuilder& SqlBuilder::insert(const StringList& columns) {
 	_operationMode = INSERT;
 
 	for(const auto& column : columns) {
-		_columns.push_back(quote(column, '`'));
+		_columns.push_back(column);
 	}
 
 	return *this;
 }
 
 SqlBuilder& SqlBuilder::into(const std::string& table) {
-	_tableName = quote(table, '`');
+	_tableName = table;
 	return *this;
 }
 
@@ -78,7 +75,7 @@ SqlBuilder& SqlBuilder::update(const std::string& table) {
 
 	_operationMode = UPDATE;
 
-	_tableName = quote(table, '`');
+	_tableName = table;
 	return *this;
 }
 
@@ -106,7 +103,7 @@ SqlBuilder& SqlBuilder::limit(uint64_t limit) {
 }
 
 SqlBuilder& SqlBuilder::orderby(const std::string& orderBy) {
-	_orderBy = quote(orderBy, '`');
+	_orderBy = orderBy;
 	return *this;
 }
 
@@ -186,7 +183,7 @@ std::string SqlBuilder::_updateToString() {
 		std::tie(column, isString, value) = *it;
 		if (isString)
 			value = quote(value, '\'');
-		_sqlResult << quote(column, '`') << "=" << value;
+		_sqlResult << column << "=" << value;
 
 		if (std::next(it) != _columnsWithValue.end()) {
 			_sqlResult << ",";
@@ -241,9 +238,9 @@ std::string _or(const SqlBuilder::StringList& filters) {
 
 template <>
 std::string cmp(const std::string& column, const std::string& data, std::string sign) {
-	return quote(column) + std::string(sign) + quote(data, '\'');
+	return column + std::string(sign) + quote(data, '\'');
 }
 
 std::string cmp(const std::string& column, const char* data, std::string sign, size_t xx) {
-	return quote(column) + std::string(sign) + quote(data, '\'');
+	return column + std::string(sign) + quote(data, '\'');
 }

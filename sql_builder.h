@@ -88,7 +88,7 @@ private:
 };
 
 /* ************************** helper functions ************************** */
-std::string quote(const std::string& s, char delim='`');
+std::string quote(const std::string& s, char delim);
 
 // "and" "or" is keyword in c++
 std::string _and(const SqlBuilder::StringList& filters);
@@ -96,7 +96,7 @@ std::string _or(const SqlBuilder::StringList& filters);
 
 template <typename T>
 std::string cmp(const std::string& column, const T& data, std::string sign) {
-	return quote(column) + std::string(sign) + boost::lexical_cast<std::string>(data);
+	return column + std::string(sign) + boost::lexical_cast<std::string>(data);
 }
 
 template <>
