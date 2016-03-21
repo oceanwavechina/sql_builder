@@ -20,6 +20,7 @@ BOOST_AUTO_TEST_CASE(insert)
 	std::string sql = SqlBuilder()
 			.select({"*"})
 			.from("nginx_log_data")
+			.leftJoin("order", "order.id=user.id")
 			.where("id>1")
 			.groupby("id")
 			.orderby("id")
@@ -28,12 +29,12 @@ BOOST_AUTO_TEST_CASE(insert)
 			.limit(10)
 			.toString();
 
-	sql = SqlBuilder()
-			.update("test.nginx_log_data")
-			.set({{"count", SqlBuilder::NUMERIC, "710"},
-				  {"3xx", SqlBuilder::NUMERIC, "0"}})
-			.where(_and({ eq("id", "1"), eq("name", 123) }))
-			.toString();
+//	sql = SqlBuilder()
+//			.update("test.nginx_log_data")
+//			.set({{"count", SqlBuilder::NUMERIC, "710"},
+//				  {"3xx", SqlBuilder::NUMERIC, "0"}})
+//			.where(_and({ eq("id", "1"), eq("name", 123) }))
+//			.toString();
 
 //
 //	sql = SqlBuilder()

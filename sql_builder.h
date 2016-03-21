@@ -38,6 +38,7 @@ public:
 
 	SqlBuilder& select(const StringList&);
 	SqlBuilder& from(const std::string&);
+	SqlBuilder& leftJoin(const std::string&/*table*/, const std::string&/*on*/);
 	SqlBuilder& groupby(const std::string&);
 	SqlBuilder& orderby(const std::string&);
 	SqlBuilder& asc();
@@ -83,6 +84,7 @@ private:
 	std::string _groupBy;
 	std::string _orderBy;
 	std::string _orderByType;
+	std::vector<std::tuple<std::string, std::string> > _leftJoin;
 
 	std::stringstream _sqlResult;
 };

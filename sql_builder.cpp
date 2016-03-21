@@ -38,6 +38,12 @@ SqlBuilder& SqlBuilder::from(const std::string& table) {
 	return *this;
 }
 
+SqlBuilder& SqlBuilder::leftJoin(const std::string& table, const std::string& on) {
+	_leftJoin.push_back(std::make_tuple(table, on));
+	return *this;
+}
+
+
 SqlBuilder& SqlBuilder::groupby(const std::string& groupBy) {
 	_groupBy = groupBy;
 	return *this;
@@ -143,6 +149,7 @@ void SqlBuilder::reset() {
 	_orderByType.clear();
 	_sqlResult.str("");
 	_groupBy.clear();
+	_leftJoin.clear();
 }
 
 
@@ -151,6 +158,12 @@ std::string SqlBuilder::_selectToString() {
 
 	if (!_tableName.empty()) {
 		_sqlResult << " FROM " << _tableName;
+
+		if(!_leftJoin.empty()) {
+			for(const auto& item : _leftJoin){
+				_sqlResult << " LEFT JOIN " << std::get<0>(item) << " ON " << std::get<1>(item);
+			}
+		}
 
 		if (!_where.empty())
 			_sqlResult << " WHERE " << _where;
@@ -244,3 +257,4 @@ std::string cmp(const std::string& column, const std::string& data, std::string 
 std::string cmp(const std::string& column, const char* data, std::string sign, size_t xx) {
 	return column + std::string(sign) + quote(data, '\'');
 }
+
