@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(insert)
     InsertModel i;
     i.insert("id", (short)32312)
         .insert("name", std::string("six"))
-        .insert("address", std::string("beijing"))
+        .insert("address", "beijing")
         .insert("time", time(NULL))
         .insert("age", (int64_t)15323892489203488)
         .into("info");
@@ -21,12 +21,13 @@ BOOST_AUTO_TEST_CASE(insert)
     std::cout<<i.str()<<std::endl;
 
     SelectModel s;
+    const char* aa = "aaa";
     s.select("name, age, address")
         .from("info")
         .where("id", 2)
         .where("time", time(NULL))
         .where("name", std::string("six"))
-        .where("address", std::string("beijing"));
+        .where("address", aa);
     std::cout<<s<<std::endl;
 }
 
