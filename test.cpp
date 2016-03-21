@@ -21,13 +21,14 @@ BOOST_AUTO_TEST_CASE(insert)
     std::cout<<i.str()<<std::endl;
 
     SelectModel s;
-    const char* aa = "aaa";
+    const char* a = "aaaa";
+    char b[] = "bbbb";
     s.select("name, age, address")
         .from("info")
         .where("id", 2)
         .where("time", time(NULL))
         .where("name", std::string("six"))
-        .where("address", aa);
+        .where("address", b);
     std::cout<<s<<std::endl;
 }
 
