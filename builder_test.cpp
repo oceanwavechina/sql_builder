@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(insert)
 			.update("test.nginx_log_data")
 			.set({{"count", SqlBuilder::NUMERIC, "710"},
 				  {"3xx", SqlBuilder::NUMERIC, "0"}})
-			.where(_and({ eq("id", 1), eq("name", 123) }))
+			.where(_and({ eq("id", "1"), eq("name", 123) }))
 			.toString();
 
 //

@@ -41,6 +41,11 @@ SqlBuilder& SqlBuilder::from(const std::string& table) {
 	return *this;
 }
 
+SqlBuilder& SqlBuilder::groupby(const std::string& groupBy) {
+	_groupBy = quote(groupBy, '`');
+	return *this;
+}
+
 SqlBuilder& SqlBuilder::insert(const StringList& columns) {
 	if (_operationMode != NONE && _operationMode != INSERT)
 		throw std::runtime_error("Error SQL operation mode: not insert");
@@ -234,7 +239,11 @@ std::string _or(const SqlBuilder::StringList& filters) {
 	return std::string(" (") + boost::join(filters, " OR ") + std::string(") ");
 }
 
-SqlBuilder& SqlBuilder::groupby(const std::string& groupBy) {
-	_groupBy = quote(groupBy, '`');
-	return *this;
+template <>
+std::string cmp(const std::string& column, const std::string& data, std::string sign) {
+	return quote(column) + std::string(sign) + quote(data, '\'');
+}
+
+std::string cmp(const std::string& column, const char* data, std::string sign, size_t xx) {
+	return quote(column) + std::string(sign) + quote(data, '\'');
 }

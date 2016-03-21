@@ -10,13 +10,16 @@
 
 #include "sql_builder.h"
 
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <unordered_map>
 #include <tuple>
+#include <type_traits>
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 class SqlBuilder {
@@ -93,13 +96,17 @@ std::string _or(const SqlBuilder::StringList& filters);
 
 template <typename T>
 std::string cmp(const std::string& column, const T& data, std::string sign) {
-	std::stringstream ss;
-	if (typeid(std::string("")).hash_code() == typeid(data).hash_code())
-		ss << '`' << data << '`';
-	else
-		ss << data;
-	return quote(column) + std::string(sign) + std::string(ss.str());
+	return quote(column) + std::string(sign) + boost::lexical_cast<std::string>(data);
 }
+
+template <>
+std::string cmp(const std::string& column, const std::string& data, std::string sign);
+
+std::string cmp(const std::string& column, const char* data, std::string sign, size_t xx=0);
+
+template <>
+std::string cmp(const std::string& column, const std::string& data, std::string sign);
+
 
 template <typename T>
 std::string eq(const std::string& column, const T& data) {
