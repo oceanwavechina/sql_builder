@@ -21,14 +21,14 @@ BOOST_AUTO_TEST_CASE(insert)
     std::cout<<i.str()<<std::endl;
 
     SelectModel s;
-    const char* a = "aaaa";
-    char b[] = "bbbb";
-    s.select("name, age, address")
-        .from("info")
-        .where("id", 2)
-        .where("time", time(NULL))
-        .where("name", std::string("six"))
-        .where("address", b);
+    std::vector<int> vec({1, 2, 3});
+    s.select({"aaa", "bbb", "ccc"})
+        .from("table")
+        .where(column("aaa") >= 0
+                and column("bbb").is_null()
+                or column("ccc") == 0
+                or column("ddd") != 1
+                and column("eee").in(vec));
     std::cout<<s<<std::endl;
 }
 

@@ -10,8 +10,8 @@ std::string InsertModel::str() {
     size_t size = _columns.size();
     for(int i = 0; i < size; ++i) {
         if(i < size - 1) {
-            c_ss<<_columns[i]<<",";
-            v_ss<<_values[i]<<",";
+            c_ss<<_columns[i]<<", ";
+            v_ss<<_values[i]<<", ";
         } else {
             c_ss<<_columns[i]<<")";
             v_ss<<_values[i]<<")";
@@ -30,7 +30,7 @@ std::string SelectModel::str() {
     size_t size = _select_columns.size();
     for(size_t i = 0; i < size; ++i) {
         if(i < size - 1) {
-            ss_w<<_select_columns[i]<<",";
+            ss_w<<_select_columns[i]<<", ";
         } else {
             ss_w<<_select_columns[i];
         }
@@ -41,7 +41,7 @@ std::string SelectModel::str() {
         ss_w<<" where ";
         for(size_t i = 0; i < size; ++i) {
             if(i < size - 1) {
-                ss_w<<_where_condition[i]<<" and ";
+                ss_w<<_where_condition[i]<<" ";
             } else {
                 ss_w<<_where_condition[i];
             }
@@ -66,5 +66,11 @@ SelectModel& SelectModel::select(const std::string& columns) {
 SelectModel& SelectModel::select(const std::vector<std::string> columns) {
     _select_columns.insert(_select_columns.end(), columns.begin(), columns.end());
     _in_sql = true;
+    return *this;
+}
+
+SelectModel& SelectModel::where(column& condition) {
+    _in_sql = true;
+    _where_condition.push_back(condition.str());
     return *this;
 }
