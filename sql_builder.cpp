@@ -27,17 +27,25 @@ SqlBuilder& SqlBuilder::select(const StringList& columns) {
 	_operationMode = SELECT;
 
 	for(const auto& column : columns){
-		if (column != "*")
-			_columns.push_back(quote(column, '`'));
-		else
-			_columns.push_back(column);
+		_columns.push_back(column);
 	}
 
 	return *this;
 }
 
 SqlBuilder& SqlBuilder::from(const std::string& table) {
-	_tableName = quote(table, '`');
+	_tableName = table;
+	return *this;
+}
+
+SqlBuilder& SqlBuilder::leftJoin(const std::string& table, const std::string& on) {
+	_leftJoin.push_back(std::make_tuple(table, on));
+	return *this;
+}
+
+
+SqlBuilder& SqlBuilder::groupby(const std::string& groupBy) {
+	_groupBy = groupBy;
 	return *this;
 }
 
@@ -48,14 +56,14 @@ SqlBuilder& SqlBuilder::insert(const StringList& columns) {
 	_operationMode = INSERT;
 
 	for(const auto& column : columns) {
-		_columns.push_back(quote(column, '`'));
+		_columns.push_back(column);
 	}
 
 	return *this;
 }
 
 SqlBuilder& SqlBuilder::into(const std::string& table) {
-	_tableName = quote(table, '`');
+	_tableName = table;
 	return *this;
 }
 
@@ -73,7 +81,7 @@ SqlBuilder& SqlBuilder::update(const std::string& table) {
 
 	_operationMode = UPDATE;
 
-	_tableName = quote(table, '`');
+	_tableName = table;
 	return *this;
 }
 
@@ -101,7 +109,7 @@ SqlBuilder& SqlBuilder::limit(uint64_t limit) {
 }
 
 SqlBuilder& SqlBuilder::orderby(const std::string& orderBy) {
-	_orderBy = quote(orderBy, '`');
+	_orderBy = orderBy;
 	return *this;
 }
 
@@ -141,6 +149,7 @@ void SqlBuilder::reset() {
 	_orderByType.clear();
 	_sqlResult.str("");
 	_groupBy.clear();
+	_leftJoin.clear();
 }
 
 
@@ -149,6 +158,12 @@ std::string SqlBuilder::_selectToString() {
 
 	if (!_tableName.empty()) {
 		_sqlResult << " FROM " << _tableName;
+
+		if(!_leftJoin.empty()) {
+			for(const auto& item : _leftJoin){
+				_sqlResult << " LEFT JOIN " << std::get<0>(item) << " ON " << std::get<1>(item);
+			}
+		}
 
 		if (!_where.empty())
 			_sqlResult << " WHERE " << _where;
@@ -181,7 +196,7 @@ std::string SqlBuilder::_updateToString() {
 		std::tie(column, isString, value) = *it;
 		if (isString)
 			value = quote(value, '\'');
-		_sqlResult << quote(column, '`') << "=" << value;
+		_sqlResult << column << "=" << value;
 
 		if (std::next(it) != _columnsWithValue.end()) {
 			_sqlResult << ",";
@@ -234,7 +249,3 @@ std::string _or(const SqlBuilder::StringList& filters) {
 	return std::string(" (") + boost::join(filters, " OR ") + std::string(") ");
 }
 
-SqlBuilder& SqlBuilder::groupby(const std::string& groupBy) {
-	_groupBy = quote(groupBy, '`');
-	return *this;
-}
