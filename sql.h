@@ -5,7 +5,6 @@
 #include <string>
 #include <ctime>
 #include <sstream>
-#include <vector>
 
 class column;
 
@@ -71,25 +70,22 @@ std::string SqlModel::to_string<time_t>(const time_t& data, const std::string& o
 class InsertModel : public SqlModel
 {
 public:
-    InsertModel() : _in_sql(true) {}
+    InsertModel() {}
     virtual ~InsertModel() {}
 
     template <typename T>
     InsertModel& insert(const std::string& c, const T& data) {
-        _in_sql = true;
         _columns.push_back(c);
         _values.push_back(this->to_string(data));
         return *this;
     }
 
     inline void into(const std::string& table_name) {
-        _in_sql = true;
         _table_name = table_name;
     }
 
     virtual std::string str();
     virtual void reset() {
-        _in_sql = true;
         _table_name.clear();
         _columns.clear();
         _values.clear();
@@ -99,26 +95,28 @@ protected:
     std::string _table_name;
     std::vector<std::string> _columns;
     std::vector<std::string> _values;
-    bool _in_sql;
 };
 
 class SelectModel : public SqlModel
 {
 public:
-    SelectModel() : _in_sql(true) {}
+    SelectModel() {}
     virtual ~SelectModel() {}
 
-    SelectModel& select(const std::string& columns);
-    SelectModel& select(const std::vector<std::string> columns);
+    template <typename... Args>
+    SelectModel& select(Args&&... columns) {
+        std::string a[] = {columns...};
+        int size = sizeof...(columns);
+        _select_columns.insert(_select_columns.end(), a, a + size);
+        return *this;
+    }
 
     SelectModel& from(const std::string& table_name) {
-        _in_sql = true;
         _table_name = table_name;
         return *this;
     }
 
     SelectModel& where(const std::string& condition) {
-        _in_sql = true;
         _where_condition.push_back(condition);
         return *this;
     }
@@ -127,7 +125,6 @@ public:
 
     virtual std::string str();
     virtual void reset() {
-        _in_sql = true;
         _table_name.clear();
         _select_columns.clear();
         _where_condition.clear();
@@ -137,30 +134,26 @@ protected:
     std::vector<std::string> _select_columns;
     std::string _table_name;
     std::vector<std::string> _where_condition;
-    bool _in_sql;
 };
 
 class UpdateModel : public SqlModel
 {
 public:
-    UpdateModel() : _in_sql(true) {}
+    UpdateModel() {}
     virtual ~UpdateModel() {}
 
     UpdateModel& update(const std::string& table_name) {
-        _in_sql = true;
         _table_name = table_name;
         return *this;
     }
 
     template <typename T>
     UpdateModel& set(const std::string& c, const T& data) {
-        _in_sql = true;
         _set_columns.push_back(c + " = " + this->to_string(data));
         return *this;
     }
 
     UpdateModel& where(const std::string& condition) {
-        _in_sql = true;
         _where_condition.push_back(condition);
         return *this;
     }
@@ -169,7 +162,6 @@ public:
 
     virtual std::string str();
     virtual void reset() {
-        _in_sql = true;
         _table_name.clear();
         _set_columns.clear();
         _where_condition.clear();
@@ -179,13 +171,12 @@ protected:
     std::vector<std::string> _set_columns;
     std::string _table_name;
     std::vector<std::string> _where_condition;
-    bool _in_sql;
 };
 
 class DeleteModel : public SqlModel
 {
 public:
-    DeleteModel() : _in_sql(true) {}
+    DeleteModel() {}
     virtual ~DeleteModel() {}
 
     DeleteModel& _delete() {
@@ -193,13 +184,11 @@ public:
     }
 
     DeleteModel& from(const std::string& table_name) {
-        _in_sql = true;
         _table_name = table_name;
         return *this;
     }
 
     DeleteModel& where(const std::string& condition) {
-        _in_sql = true;
         _where_condition.push_back(condition);
         return *this;
     }
@@ -208,7 +197,6 @@ public:
 
     virtual std::string str();
     virtual void reset() {
-        _in_sql = true;
         _table_name.clear();
         _where_condition.clear();
     }
@@ -216,7 +204,6 @@ public:
 protected:
     std::string _table_name;
     std::vector<std::string> _where_condition;
-    bool _in_sql;
 };
 
 /*
@@ -272,16 +259,17 @@ public:
         return *this;
     }
 
-    template <typename T>
-    column& in(const std::vector<T>& t) {
+    template <typename... Args>
+    column& in(Args&&... args) {
+        std::string a[] = {SqlModel::to_string(args)...};
+        int size = sizeof...(args);
         std::stringstream ss;
         ss<<_cond<<" in (";
-        size_t size = t.size();
         for(int i = 0; i < size; ++i) {
             if(i < size - 1) {
-                ss<<SqlModel::to_string(t[i])<<", ";
+                ss<<a[i]<<", ";
             } else {
-                ss<<SqlModel::to_string(t[i]);
+                ss<<a[i];
             }
         }
         ss<<")";

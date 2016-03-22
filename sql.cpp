@@ -3,7 +3,6 @@
 #include <sstream>
 
 std::string InsertModel::str() {
-    if(!_in_sql) return _sql;
     std::stringstream c_ss, v_ss;
     c_ss<<"insert into "<<_table_name<<"(";
     v_ss<<" values(";
@@ -18,13 +17,11 @@ std::string InsertModel::str() {
         }
     }
     c_ss<<v_ss.str();
-    _in_sql = false;
     _sql = c_ss.str();
     return _sql;
 }
 
 std::string SelectModel::str() {
-    if(!_in_sql) return _sql;
     std::stringstream ss_w;
     ss_w<<"select ";
     size_t size = _select_columns.size();
@@ -47,42 +44,21 @@ std::string SelectModel::str() {
             }
         }
     }
-    _in_sql = false;
     _sql = ss_w.str();
     return _sql;
 }
 
-SelectModel& SelectModel::select(const std::string& columns) {
-    std::vector<std::string> data;
-    std::stringstream ss(columns);
-    std::string ele;
-    while(std::getline(ss, ele, ',')) {
-        _select_columns.push_back(ele);
-    }
-    _in_sql = true;
-    return *this;
-}
-
-SelectModel& SelectModel::select(const std::vector<std::string> columns) {
-    _select_columns.insert(_select_columns.end(), columns.begin(), columns.end());
-    _in_sql = true;
-    return *this;
-}
-
 SelectModel& SelectModel::where(column& condition) {
-    _in_sql = true;
     _where_condition.push_back(condition.str());
     return *this;
 }
 
 UpdateModel& UpdateModel::where(column& condition) {
-    _in_sql = true;
     _where_condition.push_back(condition.str());
     return *this;
 }
 
 std::string UpdateModel::str() {
-    if(!_in_sql) return _sql;
     std::stringstream ss_w;
     ss_w<<"update "<<_table_name<<" set ";
     size_t size = _set_columns.size();
@@ -104,19 +80,16 @@ std::string UpdateModel::str() {
             }
         }
     }
-    _in_sql = false;
     _sql = ss_w.str();
     return _sql;
 }
 
 DeleteModel& DeleteModel::where(column& condition) {
-    _in_sql = true;
     _where_condition.push_back(condition.str());
     return *this;
 }
 
 std::string DeleteModel::str() {
-    if(!_in_sql) return _sql;
     std::stringstream ss_w;
     ss_w<<"delete from "<<_table_name;
     size_t size = _where_condition.size();
@@ -130,18 +103,17 @@ std::string DeleteModel::str() {
             }
         }
     }
-    _in_sql = false;
     _sql = ss_w.str();
     return _sql;
 }
 
 column& column::operator &&(column& condition) {
-    condition._cond = _cond + " and (" + condition._cond + ")";
+    condition._cond = "(" + _cond + ") and (" + condition._cond + ")";
     return condition;
 }
 
 column& column::operator ||(column& condition) {
-    condition._cond = _cond + " or (" + condition._cond + ")";
+    condition._cond = "(" + _cond + ") or (" + condition._cond + ")";
     return condition;
 }
 

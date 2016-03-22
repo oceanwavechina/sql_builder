@@ -11,43 +11,31 @@ BOOST_AUTO_TEST_SUITE(sqltest)
 BOOST_AUTO_TEST_CASE(insert)
 {
     InsertModel i;
-    i.insert("id", (short)32312)
+    i.insert("id", 32312)
         .insert("name", std::string("six"))
         .insert("address", "beijing")
         .insert("time", time(NULL))
         .insert("age", (int64_t)15323892489203488)
         .into("info");
-    std::cout<<i<<std::endl;
     std::cout<<i.str()<<std::endl;
 
     SelectModel s;
-    std::vector<int> vec({1, 2, 3});
-    s.select({"aaa", "bbb", "ccc"})
+    s.select("aaa", "bbb", "ccc")
         .from("table")
-        .where(column("aaa") >= 0
-                and column("bbb").is_null()
-                or column("ccc") == 0
-                or column("ddd") != 1
-                and column("eee").in(vec));
+        .where(column("aaa") >= 0 and column("bbb").is_null() or column("ddd") != 1 and column("eee").in(1, 2, 3));
     std::cout<<s<<std::endl;
 
     UpdateModel u;
     u.update("table")
         .set("id", 2)
         .set("name", "six")
-        .where(column("aaa") >= 0
-                and column("bbb").is_null()
-                or column("ccc") == 0
-                or column("ddd") != 1);
+        .where(column("aaa") >= 0 and column("bbb").is_null() or column("ddd") != 1 and column("eee").in(1, 2, 3));
     std::cout<<u<<std::endl;
 
     DeleteModel d;
     d._delete()
         .from("table")
-        .where(column("aaa") >= 0
-                and column("bbb").is_null()
-                or column("ccc") == 0
-                or column("ddd") != 1);
+        .where(column("aaa") >= 0 and column("bbb").is_null() or column("ddd") != 1 and column("eee").in(1, 2, 3));
     std::cout<<d<<std::endl;
 }
 
