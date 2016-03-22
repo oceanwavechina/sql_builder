@@ -249,12 +249,3 @@ std::string _or(const SqlBuilder::StringList& filters) {
 	return std::string(" (") + boost::join(filters, " OR ") + std::string(") ");
 }
 
-template <>
-std::string cmp(const std::string& column, const std::string& data, std::string sign) {
-	return column + std::string(sign) + quote(data, '\'');
-}
-
-std::string cmp(const std::string& column, const char* data, std::string sign, size_t xx) {
-	return column + std::string(sign) + quote(data, '\'');
-}
-

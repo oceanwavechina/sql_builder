@@ -101,13 +101,11 @@ std::string cmp(const std::string& column, const T& data, std::string sign) {
 	return column + std::string(sign) + boost::lexical_cast<std::string>(data);
 }
 
-template <>
-std::string cmp(const std::string& column, const std::string& data, std::string sign);
-
-std::string cmp(const std::string& column, const char* data, std::string sign, size_t xx=0);
-
-template <>
-std::string cmp(const std::string& column, const std::string& data, std::string sign);
+template <size_t N>
+std::string cmp(const std::string& column, const char(&data)[N], std::string sign){
+	std::cout  << "tst" << std::endl;
+	return column + std::string(sign) + quote(data, '\'');
+}
 
 
 template <typename T>
