@@ -117,15 +117,6 @@ public:
         return *this;
     }
 
-    /*
-    template <typename T>
-    SelectModel& where(const std::string& c, const T& data) {
-        _in_sql = true;
-        _where_condition.push_back(c + " = " + this->to_string(data));
-        return *this;
-    }
-    */
-
     SelectModel& where(const std::string& condition) {
         _in_sql = true;
         _where_condition.push_back(condition);
@@ -144,6 +135,85 @@ public:
 
 protected:
     std::vector<std::string> _select_columns;
+    std::string _table_name;
+    std::vector<std::string> _where_condition;
+    bool _in_sql;
+};
+
+class UpdateModel : public SqlModel
+{
+public:
+    UpdateModel() : _in_sql(true) {}
+    virtual ~UpdateModel() {}
+
+    UpdateModel& update(const std::string& table_name) {
+        _in_sql = true;
+        _table_name = table_name;
+        return *this;
+    }
+
+    template <typename T>
+    UpdateModel& set(const std::string& c, const T& data) {
+        _in_sql = true;
+        _set_columns.push_back(c + " = " + this->to_string(data));
+        return *this;
+    }
+
+    UpdateModel& where(const std::string& condition) {
+        _in_sql = true;
+        _where_condition.push_back(condition);
+        return *this;
+    }
+
+    UpdateModel& where(column& condition); 
+
+    virtual std::string str();
+    virtual void reset() {
+        _in_sql = true;
+        _table_name.clear();
+        _set_columns.clear();
+        _where_condition.clear();
+    }
+
+protected:
+    std::vector<std::string> _set_columns;
+    std::string _table_name;
+    std::vector<std::string> _where_condition;
+    bool _in_sql;
+};
+
+class DeleteModel : public SqlModel
+{
+public:
+    DeleteModel() : _in_sql(true) {}
+    virtual ~DeleteModel() {}
+
+    DeleteModel& _delete() {
+        return *this;
+    }
+
+    DeleteModel& from(const std::string& table_name) {
+        _in_sql = true;
+        _table_name = table_name;
+        return *this;
+    }
+
+    DeleteModel& where(const std::string& condition) {
+        _in_sql = true;
+        _where_condition.push_back(condition);
+        return *this;
+    }
+
+    DeleteModel& where(column& condition); 
+
+    virtual std::string str();
+    virtual void reset() {
+        _in_sql = true;
+        _table_name.clear();
+        _where_condition.clear();
+    }
+
+protected:
     std::string _table_name;
     std::vector<std::string> _where_condition;
     bool _in_sql;
@@ -219,35 +289,12 @@ public:
         return *this;
     }
 
-    column& operator &&(column& condition) {
-        condition._cond = _cond + " and (" + condition._cond + ")";
-        return condition;
-    }
-
-    column& operator ||(column& condition) {
-        condition._cond = _cond + " or (" + condition._cond + ")";
-        return condition;
-    }
-
-    column& operator &&(const std::string& condition) {
-        _cond = _cond + " and " + condition;
-        return *this;
-    }
-
-    column& operator ||(const std::string& condition) {
-        _cond = _cond + " or " + condition;
-        return *this;
-    }
-
-    column& operator &&(const char* condition) {
-        _cond = _cond + " and " + std::string(condition);
-        return *this;
-    }
-
-    column& operator ||(const char* condition) {
-        _cond = _cond + " or " + std::string(condition);
-        return *this;
-    }
+    column& operator &&(column& condition);
+    column& operator ||(column& condition);
+    column& operator &&(const std::string& condition);
+    column& operator ||(const std::string& condition);
+    column& operator &&(const char* condition);
+    column& operator ||(const char* condition);
 
     template <typename T>
     column& operator ==(const T& data) {

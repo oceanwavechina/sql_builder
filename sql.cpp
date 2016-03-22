@@ -74,3 +74,93 @@ SelectModel& SelectModel::where(column& condition) {
     _where_condition.push_back(condition.str());
     return *this;
 }
+
+UpdateModel& UpdateModel::where(column& condition) {
+    _in_sql = true;
+    _where_condition.push_back(condition.str());
+    return *this;
+}
+
+std::string UpdateModel::str() {
+    if(!_in_sql) return _sql;
+    std::stringstream ss_w;
+    ss_w<<"update "<<_table_name<<" set ";
+    size_t size = _set_columns.size();
+    for(size_t i = 0; i < size; ++i) {
+        if(i < size - 1) {
+            ss_w<<_set_columns[i]<<", ";
+        } else {
+            ss_w<<_set_columns[i];
+        }
+    }
+    size = _where_condition.size();
+    if(size > 0) {
+        ss_w<<" where ";
+        for(size_t i = 0; i < size; ++i) {
+            if(i < size - 1) {
+                ss_w<<_where_condition[i]<<" ";
+            } else {
+                ss_w<<_where_condition[i];
+            }
+        }
+    }
+    _in_sql = false;
+    _sql = ss_w.str();
+    return _sql;
+}
+
+DeleteModel& DeleteModel::where(column& condition) {
+    _in_sql = true;
+    _where_condition.push_back(condition.str());
+    return *this;
+}
+
+std::string DeleteModel::str() {
+    if(!_in_sql) return _sql;
+    std::stringstream ss_w;
+    ss_w<<"delete from "<<_table_name;
+    size_t size = _where_condition.size();
+    if(size > 0) {
+        ss_w<<" where ";
+        for(size_t i = 0; i < size; ++i) {
+            if(i < size - 1) {
+                ss_w<<_where_condition[i]<<" ";
+            } else {
+                ss_w<<_where_condition[i];
+            }
+        }
+    }
+    _in_sql = false;
+    _sql = ss_w.str();
+    return _sql;
+}
+
+column& column::operator &&(column& condition) {
+    condition._cond = _cond + " and (" + condition._cond + ")";
+    return condition;
+}
+
+column& column::operator ||(column& condition) {
+    condition._cond = _cond + " or (" + condition._cond + ")";
+    return condition;
+}
+
+column& column::operator &&(const std::string& condition) {
+    _cond = _cond + " and " + condition;
+    return *this;
+}
+
+column& column::operator ||(const std::string& condition) {
+    _cond = _cond + " or " + condition;
+    return *this;
+}
+
+column& column::operator &&(const char* condition) {
+    _cond = _cond + " and " + std::string(condition);
+    return *this;
+}
+
+column& column::operator ||(const char* condition) {
+    _cond = _cond + " or " + std::string(condition);
+    return *this;
+}

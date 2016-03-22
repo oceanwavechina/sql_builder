@@ -30,6 +30,25 @@ BOOST_AUTO_TEST_CASE(insert)
                 or column("ddd") != 1
                 and column("eee").in(vec));
     std::cout<<s<<std::endl;
+
+    UpdateModel u;
+    u.update("table")
+        .set("id", 2)
+        .set("name", "six")
+        .where(column("aaa") >= 0
+                and column("bbb").is_null()
+                or column("ccc") == 0
+                or column("ddd") != 1);
+    std::cout<<u<<std::endl;
+
+    DeleteModel d;
+    d._delete()
+        .from("table")
+        .where(column("aaa") >= 0
+                and column("bbb").is_null()
+                or column("ccc") == 0
+                or column("ddd") != 1);
+    std::cout<<d<<std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
