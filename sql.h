@@ -5,15 +5,13 @@
 #include <string>
 #include <ctime>
 #include <sstream>
+#include <map>
 
 class column;
 
-class SqlModel
+class SqlHelper
 {
 public:
-    virtual void reset() = 0;
-    virtual std::string str() = 0;
-
     template <typename T>
     static std::string to_string(const T& data, const std::string& op = "") {
         return std::to_string(data);
@@ -29,17 +27,10 @@ public:
         }
         return "'" + std::string(data) + "'";
     }
-
-    friend inline std::ostream& operator<< (std::ostream& out, SqlModel& mod) {
-        out<<mod.str();
-        return out;
-    }
-protected:
-    std::string _sql;
 };
 
 template <>
-std::string SqlModel::to_string<std::string>(const std::string& data, const std::string& op/* = ""*/) {
+std::string SqlHelper::to_string<std::string>(const std::string& data, const std::string& op/* = ""*/) {
     if(op == "is") {
         if(data == "null" || data == "NULL") {
             return data;
@@ -49,7 +40,7 @@ std::string SqlModel::to_string<std::string>(const std::string& data, const std:
 }
 
 template <>
-std::string SqlModel::to_string<const char*>(const char* const& data, const std::string& op/* = ""*/) {
+std::string SqlHelper::to_string<const char*>(const char* const& data, const std::string& op/* = ""*/) {
     if(op == "is") {
         std::string a(data);
         if(a == "null" || a == "NULL") {
@@ -60,14 +51,79 @@ std::string SqlModel::to_string<const char*>(const char* const& data, const std:
 }
 
 template <>
-std::string SqlModel::to_string<time_t>(const time_t& data, const std::string& op/* = ""*/) {
+std::string SqlHelper::to_string<time_t>(const time_t& data, const std::string& op/* = ""*/) {
     char buff[128] = {0};
     struct tm* ttime = localtime(&data);
     strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S", ttime);
     return "'" + std::string(buff) + "'";
 }
 
-class InsertModel : public SqlModel
+
+class SqlModel
+{
+public:
+    class SqlValue
+    {
+        friend class SqlModel;
+    public:
+        SqlValue() {}
+
+        template <typename T>
+        SqlValue(const T&& v) {
+            _value = SqlHelper::to_string(v);
+        }
+        template <typename T>
+        SqlValue& operator=(const T& v) {
+            _value = SqlHelper::to_string(v);
+            return *this;
+        }
+
+        std::string str() const {
+            if(*_value.begin() == '\'' && *_value.rbegin() == '\'') {
+                return std::string(_value.c_str() + 1, _value.size() - 2);
+            } else {
+                return _value;
+            }
+        }
+    private:
+        std::string _str() const {
+            return _value;
+        }
+        std::string _value;
+    };
+
+    SqlValue& operator [](const std::string& key) {
+        return _values[key];
+    }
+
+    template <typename T>
+    SqlValue& insert(const std::string& key, const T& value) {
+        _values.insert(std::make_pair(key, SqlValue(value)));
+    }
+
+    SqlValue& erase(const std::string& key) {
+        _values.erase(key);
+    }
+
+    void dump(std::vector<std::string> &c, std::vector<std::string> &v) const {
+        for(const auto& value : _values) {
+            c.push_back(value.first);
+            v.push_back(value.second._str());
+        }
+    }
+
+    void dump(std::vector<std::string> &v) const {
+        for(const auto& value : _values) {
+            v.push_back(value.first + " = " + value.second._str());
+        }
+    }
+
+private:
+    std::string _key;
+    std::map<std::string, SqlValue> _values;
+};
+
+class InsertModel
 {
 public:
     InsertModel() {}
@@ -76,7 +132,12 @@ public:
     template <typename T>
     InsertModel& insert(const std::string& c, const T& data) {
         _columns.push_back(c);
-        _values.push_back(this->to_string(data));
+        _values.push_back(SqlHelper::to_string(data));
+        return *this;
+    }
+
+    InsertModel& insert(const SqlModel& mod) {
+        mod.dump(_columns, _values);
         return *this;
     }
 
@@ -84,20 +145,26 @@ public:
         _table_name = table_name;
     }
 
-    virtual std::string str();
-    virtual void reset() {
+    std::string str();
+    void reset() {
         _table_name.clear();
         _columns.clear();
         _values.clear();
+    }
+
+    friend inline std::ostream& operator<< (std::ostream& out, InsertModel& mod) {
+        out<<mod.str();
+        return out;
     }
 
 protected:
     std::string _table_name;
     std::vector<std::string> _columns;
     std::vector<std::string> _values;
+    std::string _sql;
 };
 
-class SelectModel : public SqlModel
+class SelectModel
 {
 public:
     SelectModel() {}
@@ -123,20 +190,25 @@ public:
 
     SelectModel& where(column& condition); 
 
-    virtual std::string str();
-    virtual void reset() {
+    std::string str();
+    void reset() {
         _table_name.clear();
         _select_columns.clear();
         _where_condition.clear();
+    }
+    friend inline std::ostream& operator<< (std::ostream& out, SelectModel& mod) {
+        out<<mod.str();
+        return out;
     }
 
 protected:
     std::vector<std::string> _select_columns;
     std::string _table_name;
     std::vector<std::string> _where_condition;
+    std::string _sql;
 };
 
-class UpdateModel : public SqlModel
+class UpdateModel
 {
 public:
     UpdateModel() {}
@@ -149,7 +221,12 @@ public:
 
     template <typename T>
     UpdateModel& set(const std::string& c, const T& data) {
-        _set_columns.push_back(c + " = " + this->to_string(data));
+        _set_columns.push_back(c + " = " + SqlHelper::to_string(data));
+        return *this;
+    }
+
+    UpdateModel& set(const SqlModel& mod) {
+        mod.dump(_set_columns);
         return *this;
     }
 
@@ -160,20 +237,25 @@ public:
 
     UpdateModel& where(column& condition); 
 
-    virtual std::string str();
-    virtual void reset() {
+    std::string str();
+    void reset() {
         _table_name.clear();
         _set_columns.clear();
         _where_condition.clear();
+    }
+    friend inline std::ostream& operator<< (std::ostream& out, UpdateModel& mod) {
+        out<<mod.str();
+        return out;
     }
 
 protected:
     std::vector<std::string> _set_columns;
     std::string _table_name;
     std::vector<std::string> _where_condition;
+    std::string _sql;
 };
 
-class DeleteModel : public SqlModel
+class DeleteModel
 {
 public:
     DeleteModel() {}
@@ -195,15 +277,20 @@ public:
 
     DeleteModel& where(column& condition); 
 
-    virtual std::string str();
-    virtual void reset() {
+    std::string str();
+    void reset() {
         _table_name.clear();
         _where_condition.clear();
+    }
+    friend inline std::ostream& operator<< (std::ostream& out, DeleteModel& mod) {
+        out<<mod.str();
+        return out;
     }
 
 protected:
     std::string _table_name;
     std::vector<std::string> _where_condition;
+    std::string _sql;
 };
 
 /*
@@ -243,7 +330,7 @@ std::string OR(Args&&... args) {
 
 template <typename T>
 static std::string MAKE_WHERE(const std::string& c, const std::string& op, const T& data) {
-    return c + " " + op + " " + SqlModel::to_string(data, op);
+    return c + " " + op + " " + SqlHelper::to_string(data, op);
 }
 */
 
@@ -261,7 +348,7 @@ public:
 
     template <typename... Args>
     column& in(Args&&... args) {
-        std::string a[] = {SqlModel::to_string(args)...};
+        std::string a[] = {SqlHelper::to_string(args)...};
         int size = sizeof...(args);
         std::stringstream ss;
         ss<<_cond<<" in (";
@@ -286,37 +373,37 @@ public:
 
     template <typename T>
     column& operator ==(const T& data) {
-        _cond = _cond + " = " + SqlModel::to_string(data);
+        _cond = _cond + " = " + SqlHelper::to_string(data);
         return *this;
     }
 
     template <typename T>
     column& operator !=(const T& data) {
-        _cond = _cond + " != " + SqlModel::to_string(data);
+        _cond = _cond + " != " + SqlHelper::to_string(data);
         return *this;
     }
 
     template <typename T>
     column& operator >=(const T& data) {
-        _cond = _cond + " >= " + SqlModel::to_string(data);
+        _cond = _cond + " >= " + SqlHelper::to_string(data);
         return *this;
     }
 
     template <typename T>
     column& operator <=(const T& data) {
-        _cond = _cond + " <= " + SqlModel::to_string(data);
+        _cond = _cond + " <= " + SqlHelper::to_string(data);
         return *this;
     }
 
     template <typename T>
     column& operator >(const T& data) {
-        _cond = _cond + " > " + SqlModel::to_string(data);
+        _cond = _cond + " > " + SqlHelper::to_string(data);
         return *this;
     }
 
     template <typename T>
     column& operator <(const T& data) {
-        _cond = _cond + " < " + SqlModel::to_string(data);
+        _cond = _cond + " < " + SqlHelper::to_string(data);
         return *this;
     }
 

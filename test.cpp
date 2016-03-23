@@ -37,6 +37,20 @@ BOOST_AUTO_TEST_CASE(insert)
         .from("table")
         .where(column("aaa") >= 0 and column("bbb").is_null() or column("ddd") != 1 and column("eee").in(1, 2, 3));
     std::cout<<d<<std::endl;
+
+    SqlModel m;
+    m["id"] = 1;
+    m["name"] = "six-ddc";
+
+    u.reset();
+    u.update("table")
+        .set(m);
+    std::cout<<u<<std::endl;
+
+    i.reset();
+    i.insert(m)
+        .into("table");
+    std::cout<<i<<std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
